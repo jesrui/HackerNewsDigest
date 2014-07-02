@@ -72,6 +72,14 @@ function dump(params)
     end
 end
 
+function shallowcopy(t)
+    local copy = {}
+    for k, v in pairs(t) do
+        copy[k] = v
+    end
+    return copy
+end
+
 function show_history(params)
     print('show_history')
 end
@@ -86,17 +94,55 @@ end
 
 function show_stories(params)
     print('show_stories')
-    -- TODO get timestaps as UTC, rather than local time
-    local ok, timestamp1 = pcall(os.time, params)
-    if not ok then
-        timestamp1 = os.time()
+    local since = params
+--    dump(since)
+    if not tonumber(since.year) then
+        since.year = 2013
     end
-    local timestamp2 = timestamp1 - 60*60
-    print('ok', ok, 'timestamp1', timestamp1, 'timestamp2', timestamp2)
+    local untilt = shallowcopy(since)
+    for _, f in ipairs {'min', 'hour', 'day', 'month', 'year'} do
+        if tonumber(since[f]) then
+            untilt[f] = since[f] + 1
+            break
+        end
+    end
+--    dump(untilt)
+    for _, d in pairs{since, untilt} do
+        if not tonumber(d.month) then
+            d.month = 1
+        end
+        if not tonumber(d.day) then
+            d.day = 1
+        end
+        if not tonumber(d.hour) then
+            d.hour = 0
+        end
+        if not tonumber(d.min) then
+            d.min = 0
+        end
+    end
+
+    -- NOTE: to get timestaps as UTC, rather than local time, start the server
+    -- with an empty TZ environment variable, as in
+    --   TZ= ./althttpd ....
+    -- This will work on POSIX systems. See http://linux.die.net/man/3/tzset
+    -- http://www-01.ibm.com/support/knowledgecenter/SSLTBW_1.12.0/com.ibm.zos.r12.bpxbd00/rttzs.htm%23rttzs?lang=en
+    -- For ANSI-C see:
+    -- https://stackoverflow.com/questions/2271408/utc-to-time-of-the-day-in-ansi-c/2271512#2271512
+    local timestamp1 = os.time(since)
+    local timestamp2 = os.time(untilt)
+
+    local datefmt = function(d)
+        return d.hour == 0 and d.min == 0 and '!%F' or '!%F %T'
+    end
+
+    print('timestamp1', timestamp1, 'timestamp2', timestamp2)
+    print('stories since '..os.date(datefmt(since), timestamp1)
+        ..' until '..os.date(datefmt(untilt), timestamp2))
 
     local q = 'select objectID, created_at_i, author, title, num_comments'
         ..' from stories'
-        ..' where created_at_i between '..timestamp2..' and '..timestamp1
+        ..' where created_at_i between '..timestamp1..' and '..timestamp2
         ..' order by created_at_i desc'
 
     local t = starttimer()
