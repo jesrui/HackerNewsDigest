@@ -64,7 +64,6 @@ for _, name in ipairs(cgienv) do
 --    print(name, cgienv[name])
 end
 
-
 -- http://www.keplerproject.org/en/LuaGems_08 example1.lua
 
 function dump(params)
@@ -86,10 +85,7 @@ function show_diff(...)
 end
 
 function show_stories(params)
-    local t = starttimer()
     print('show_stories')
---    dump(params)
---    print('QUERY_STRING', cgienv.QUERY_STRING)
     -- TODO get timestaps as UTC, rather than local time
     local ok, timestamp1 = pcall(os.time, params)
     if not ok then
@@ -103,25 +99,21 @@ function show_stories(params)
         ..' where created_at_i between '..timestamp2..' and '..timestamp1
         ..' order by created_at_i desc'
 
+    local t = starttimer()
+
+    local nrows = 0
     for row in c:prepare(q):irows() do
---        print(table.concat(row, '\t'))
-        print(row[1], row[5], os.date('!%F %T', row[2]), row[3], row[4])
+        nrows = nrows + 1
+        local author = string.format('%-10s', row[3])
+        print(row[1], row[5], os.date('!%F %T', row[2]), author, row[4])
     end
+    print (nrows..' rows')
 
---local p = c:prepare()
---local row = p:fetch()
---while row ~= nil do
---	print(' fetch: ' .. row)
---	row = p:fetch()
---end
-
-    print ('elapsed', stoptimer(t), 'seconds')
-
+    print ('elapsed '..stoptimer(t)..' seconds')
 end
 
 function show_comments(params)
     print('show_comments')
---    dump(params)
 
     local root_id = tonumber(params.objectID)
     if not root_id then
@@ -135,22 +127,21 @@ function show_comments(params)
         ..' where story_id = '..root_id
         ..' order by created_at_i desc'
 
-    print('q', q)
-
     local t = starttimer()
 
     local nrows = 0
-
     for row in c:prepare(q):irows() do
         nrows = nrows + 1
-        comment = tostring(row[4])
-        print(row[1], os.date('!%F %T', row[2]), row[3],
-        comment:sub(1, 80), #comment < 80 and '' or ' ...')
+        local author = string.format('%-10s', row[3])
+        local comment = tostring(row[4])
+        if #comment > 80 then
+            comment = comment:sub(1, 80)..' ...'
+        end
+        print(row[1], os.date('!%F %T', row[2]), author, comment)
     end
     print (nrows..' rows')
 
-    print ('elapsed', stoptimer(t), 'seconds')
-
+    print ('elapsed '..stoptimer(t)..' seconds')
 end
 
 URLs = {
