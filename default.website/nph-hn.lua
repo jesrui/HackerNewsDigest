@@ -32,12 +32,6 @@ local function stoptimer(t)
     return apr.time_now() -t
 end
 
---do
---    local t = starttimer()
---    os.execute('sleep 2')
---    print ('elapsed', stoptimer(t), 'seconds')
---end
-
 local cgienv = {
      'SERVER_PROTOCOL',
      'SERVER_PORT',
@@ -64,11 +58,11 @@ for _, name in ipairs(cgienv) do
 --    print(name, cgienv[name])
 end
 
--- http://www.keplerproject.org/en/LuaGems_08 example1.lua
-
-function dump(params)
-    for k, v in pairs(params) do
-        print(k, v)
+function dump(t, str, level)
+    level = level or 0
+    print(string.rep("  ", level)..(str or tostring(t)))
+    for k, v in pairs(t) do
+        print(string.rep("  ", level+1), k, v)
     end
 end
 
@@ -79,6 +73,8 @@ function shallowcopy(t)
     end
     return copy
 end
+
+-- http://www.keplerproject.org/en/LuaGems_08 example1.lua
 
 function show_history(params)
     print('show_history')
@@ -148,6 +144,8 @@ function show_stories(params)
     local t = starttimer()
 
     local nrows = 0
+    -- FIXME lsqlite.so hangs sometimes here?
+    -- TODO check errors from prepare()
     for row in c:prepare(q):irows() do
         nrows = nrows + 1
         local author = string.format('%-10s', row[3])
@@ -167,25 +165,64 @@ function show_comments(params)
         return
     end
 
-    print('root_id', root_id)
-
-    local q = 'select objectID, created_at_i, author, comment_text from comments'
-        ..' where story_id = '..root_id
-        ..' order by created_at_i desc'
-
     local t = starttimer()
 
+    local q = 'select objectID, created_at_i, author, title, num_comments'
+        ..' from stories where objectID = '..root_id
+
+    for row in c:prepare(q):rows() do
+        dump(row, 'story '..row.objectID)
+    end
+
+    q = 'select objectID, parent_id, created_at_i, author, comment_text'
+        ..' from comments where story_id = '..root_id
+        ..' order by created_at_i desc'
+
+
     local nrows = 0
-    for row in c:prepare(q):irows() do
+    local comments = {} -- keyed by parent_id
+    local flat = {} -- keyed by objectID
+    for row in c:prepare(q):rows() do
         nrows = nrows + 1
-        local author = string.format('%-10s', row[3])
-        local comment = tostring(row[4])
+        local comment = tostring(row.comment_text)
         if #comment > 80 then
             comment = comment:sub(1, 80)..' ...'
         end
-        print(row[1], os.date('!%F %T', row[2]), author, comment)
+        local children = comments[row.parent_id] or {}
+        children[#children+1] = row
+        comments[row.parent_id] = children
+        flat[row.objectID] = row
+--        print(row.objectID, row.parent_id, os.date('!%F %T', row.created_at_i),
+--            string.format('%-10s', row.author), comment)
+        row.comment_text = comment
     end
     print (nrows..' rows')
+
+--[=[
+    dump(comments, 'comments')
+    for parent_id, children in pairs(comments) do
+        dump(children, 'parent '..parent_id)
+        for i, c in ipairs(children) do
+            dump(c, 'comment '..c.objectID, 1)
+        end
+    end
+--]=]
+
+    -- TODO sort children by date or points
+
+    local printthread
+    printthread = function(parent_id, lvl)
+        local c = flat[parent_id] or {}
+        dump(c, 'comment '..parent_id, lvl)
+        local children = comments[parent_id]
+        if children then
+            for i, c in ipairs(children) do
+                printthread(c.objectID, lvl+1)
+            end
+        end
+    end
+
+    printthread(root_id, 0)
 
     print ('elapsed '..stoptimer(t)..' seconds')
 end
