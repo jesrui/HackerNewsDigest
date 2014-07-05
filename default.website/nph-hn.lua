@@ -140,44 +140,36 @@ local function show_stories(params)
         return tonumber(d.hour) == 0 and tonumber(d.min) == 0 and '!%F' or '!%F %T'
     end
 
---    print('timestamp1', timestamp1, 'timestamp2', timestamp2)
---    print('stories since '..os.date(datefmt(since), timestamp1)
---        ..' until '..os.date(datefmt(untilt), timestamp2))
+    local html = cosmo.fill(templates.stories_head, {
+        since = os.date(datefmt(since), timestamp1),
+        untilt = os.date(datefmt(untilt), timestamp2),
+    })
+    print(html)
+    print(templates.stories_body_top)
 
-    local q = 'select objectID, created_at_i, author, title, num_comments, points'
+    local q = 'select objectID, created_at_i, author, title, num_comments, '
+        ..'points, url'
         ..' from stories'
         ..' where created_at_i between '..timestamp1..' and '..timestamp2
         ..' order by created_at_i desc'
 
     local t = starttimer()
 
-    local nrows = 0
-    local stories = {}
     -- FIXME lsqlite.so hangs sometimes here?
     -- TODO check errors from prepare()
-    for row in c:prepare(q):rows() do
+    local nrows = 0
+    for story in c:prepare(q):rows() do
         nrows = nrows + 1
-        row.created_at = os.date('!%F %T', row.created_at_i)
---        dump(row, 'row')
-        stories[#stories+1] = row
-        local author = string.format('%-10s', row.author)
---        print(row.objectID, row.num_comments, row.created_at, author, row.title)
+        story.created_at = os.date('!%F %T', story.created_at_i)
+        story.tr_class = nrows % 2 == 0 and 'light' or 'dark'
+        story.commentsURL = makeurl('comments', story)
+        -- TODO story.url == '' and story.url == makeurl('comments', story)
+--        dump(story, 'story')
+        html = cosmo.fill(templates.stories_body_listing, story)
+        print(html)
     end
---    print (nrows..' rows')
 
-    print(
-        cosmo.fill(templates.stories, {
-            since = os.date(datefmt(since), timestamp1),
-            untilt = os.date(datefmt(untilt), timestamp2),
-            list_story = function()
-                for i, st in ipairs(stories) do
-                    st.tr_class = i % 2 == 0 and 'light' or 'dark'
-                    st.commentsURL = makeurl('comments', st)
-                    cosmo.yield(st)
-                end
-            end
-        }))
-
+    print(templates.stories_body_bottom)
 --    print ('elapsed '..stoptimer(t)..' seconds')
 end
 

@@ -12,7 +12,7 @@ $list_comments[[
 
 ]==],
 
-    stories = [==[
+    stories_head = [==[
 <!doctype html>
 <html lang="en">
 <head>
@@ -21,7 +21,8 @@ $list_comments[[
 <title>Hacker News Digest - Stories from $since till $untilt</title>
 <link rel="stylesheet" href="/css/gitweb.css"/>
 </head>
-
+]==],
+    stories_body_top = [==[
 <body>
 
 <div class="page_header">
@@ -36,23 +37,21 @@ snapshot (<a href="/w/sqlite.git/snapshot/HEAD.tar.gz">tar.gz</a> <a href="/w/sq
 <div class="header">
 <span class="title"><a class="title" href="/w/sqlite.git/commit/HEAD">Add another test to verify that SQLite is using stat4 data for composite primary... </a><span class="refs"><span class="head" title="heads/master"><a href="/w/sqlite.git/shortlog/refs/heads/master">master</a></span></span><a class="cover" href="/w/sqlite.git/commit/HEAD"></a></span>
 </div>
-
 <div class="page_body">
 <table class="tree">
-$list_story[[
+]==],
+    stories_body_listing = [==[
 <tr class="$tr_class">
 <td class="mode">$created_at</td>
-<td class="size">$num_comments</td>
+<td class="size link"><a href="$commentsURL">$num_comments</a></td>
 <td class="size">$points</td>
 <td class="mode">$author</td>
-<td class="link"><a href="$commentsURL">$title</a></td>
-</tr>]]
-</table>
-
+<td class="link"><a href="$url">$title</a></td>
 </tr>
+]==],
+    stories_body_bottom = [==[
 </table>
 </div>
-
 <div class="page_footer">
 <div class="page_footer_text">Unofficial git mirror of the SQLite sources</div>
 <a class="rss_logo" title="log RSS feed" href="/w/sqlite.git/rss">RSS</a>
