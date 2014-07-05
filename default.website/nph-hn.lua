@@ -97,33 +97,58 @@ end
 local function show_stories(params)
     print(response[200])
 --    print('show_stories')
-    local since = params
+--    dump(params, 'params')
+    local since = shallowcopy(params)
 --    dump(since)
     if not tonumber(since.year) then
         since.year = 2013
     end
-    local untilt = shallowcopy(since)
-    for _, f in ipairs {'min', 'hour', 'day', 'month', 'year'} do
+    local periods = {'min', 'hour', 'day', 'month', 'year'}
+    local period
+    local datefmts = { min = '!%c', hour = '!%c', day = '%a %d %b %Y',
+        month = '%b %Y', year = '%Y'}
+    local datefmt
+    for _, f in ipairs(periods) do
         if tonumber(since[f]) then
-            untilt[f] = since[f] + 1
+            period = f
+            datefmt = datefmts[f]
             break
         end
     end
+    if not tonumber(since.month) then
+        since.month = 1
+    end
+    if not tonumber(since.day) then
+        since.day = 1
+    end
+    if not tonumber(since.hour) then
+        since.hour = 0
+    end
+    if not tonumber(since.min) then
+        since.min = 0
+    end
+    local untilt = shallowcopy(since)
 --    dump(untilt)
-    for _, d in pairs{since, untilt} do
-        if not tonumber(d.month) then
-            d.month = 1
-        end
-        if not tonumber(d.day) then
-            d.day = 1
-        end
-        if not tonumber(d.hour) then
-            d.hour = 0
-        end
-        if not tonumber(d.min) then
-            d.min = 0
+    untilt[period] = untilt[period] + 1
+
+    -- remove unspecified parameter fields from d table
+    local stripdate = function(d)
+        for f, _ in pairs(d) do
+            if not tonumber(params[f]) then
+                d[f] = nil
+            end
         end
     end
+
+    -- TODO does os.time() take leap seconds into account?
+    local prevdate = os.date('*t', os.time(since)-1)
+    stripdate(prevdate)
+    local nextdate = os.date('*t', os.time(untilt))
+    stripdate(nextdate)
+
+--    dump(params, 'params')
+--    dump(prevdate, 'prevdate')
+--    dump(nextdate, 'nextdate')
 
     -- NOTE: to get timestaps as UTC, rather than local time, start the server
     -- with an empty TZ environment variable, as in
@@ -135,17 +160,16 @@ local function show_stories(params)
     local timestamp1 = os.time(since)
     local timestamp2 = os.time(untilt)
 
-    local datefmt = function(d)
---        dump(d, 'datefmt')
-        return tonumber(d.hour) == 0 and tonumber(d.min) == 0 and '!%F' or '!%F %T'
-    end
-
-    local html = cosmo.fill(templates.stories_head, {
-        since = os.date(datefmt(since), timestamp1),
-        untilt = os.date(datefmt(untilt), timestamp2),
-    })
+    local dates = {
+        since = os.date(datefmt, timestamp1),
+        untilt = os.date(datefmt, timestamp2),
+        prevdateURL = makeurl('stories', prevdate),
+        nextdateURL = makeurl('stories', nextdate),
+    }
+    local html = cosmo.fill(templates.stories_head, dates)
     print(html)
-    print(templates.stories_body_top)
+    html = cosmo.fill(templates.stories_body_top, dates)
+    print(html)
 
     local q = 'select objectID, created_at_i, author, title, num_comments, '
         ..'points, url'
@@ -157,6 +181,8 @@ local function show_stories(params)
 
     -- FIXME lsqlite.so hangs sometimes here?
     -- TODO check errors from prepare()
+    -- FIXME althttpd only returns ~ 20 MB of data (results till ~ 2013-10-22
+    -- when the query is for the whole 2013?)
     local nrows = 0
     for story in c:prepare(q):rows() do
         nrows = nrows + 1
@@ -295,6 +321,10 @@ function makeurl(action_name, params)
         local pattern, f, name = unpack(v)
         if name == action_name then
             local url = string.gsub(pattern, '$([%w_-]+)', params)
+            local n
+            repeat -- remove undefined param names: '/123/$p1/$p2/' --> '/123'
+                url, n = string.gsub(url, '/$[%w_-]+/?$', '')
+            until n == 0
             url = cgienv.SCRIPT_NAME..url
             return url
         end

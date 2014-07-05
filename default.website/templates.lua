@@ -18,7 +18,7 @@ $list_comments[[
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width"/>
-<title>Hacker News Digest - Stories from $since till $untilt</title>
+<title>Hacker News Digest - Stories from $since</title>
 <link rel="stylesheet" href="/css/gitweb.css"/>
 </head>
 ]==],
@@ -30,12 +30,12 @@ $list_comments[[
 </div>
 
 <div class="page_nav">
-<a href="/w/sqlite.git">summary</a> | <a href="/w/sqlite.git/shortlog/HEAD">log</a> | <a href="/git-browser/by-commit.html?r=sqlite.git">graphiclog</a> | <a href="/w/sqlite.git/commit/HEAD">commit</a> | <a href="/w/sqlite.git/commitdiff/HEAD">commitdiff</a> | tree | <a href="/w/sqlite.git/refs">refs</a> | <a href="/editproj.cgi?name=sqlite.git">edit</a> | <a href="/regproj.cgi?fork=sqlite.git">fork</a><br/>
+<a href="$prevdateURL">previous</a> | <a href="$nextdateURL">next</a> | <a href="/git-browser/by-commit.html?r=sqlite.git">graphiclog</a> | <a href="/w/sqlite.git/commit/HEAD">commit</a> | <a href="/w/sqlite.git/commitdiff/HEAD">commitdiff</a> | tree | <a href="/w/sqlite.git/refs">refs</a> | <a href="/editproj.cgi?name=sqlite.git">edit</a> | <a href="/regproj.cgi?fork=sqlite.git">fork</a><br/>
 snapshot (<a href="/w/sqlite.git/snapshot/HEAD.tar.gz">tar.gz</a> <a href="/w/sqlite.git/snapshot/HEAD.zip">zip</a>)<br/>
 </div>
 
 <div class="header">
-<span class="title"><a class="title" href="/w/sqlite.git/commit/HEAD">Add another test to verify that SQLite is using stat4 data for composite primary... </a><span class="refs"><span class="head" title="heads/master"><a href="/w/sqlite.git/shortlog/refs/heads/master">master</a></span></span><a class="cover" href="/w/sqlite.git/commit/HEAD"></a></span>
+<span class="title">Hacker News stories from $since ------------- $untilt</span>
 </div>
 <div class="page_body">
 <table class="tree">
