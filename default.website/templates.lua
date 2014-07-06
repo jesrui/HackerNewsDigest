@@ -11,8 +11,8 @@ return {
     comments_body_top = [==[
 <body>
     <center>
+        <!-- BEGIN STORY AND COMMENTS -->
         <table border=0 cellpadding=0 cellspacing=0 width="85%" bgcolor=#f6f6ef>
-            <!-- BEGIN STORY AND COMMENTS -->
             <tr>
                 <td>
                     <!-- BEGIN STORY -->
@@ -27,7 +27,7 @@ return {
                             <td colspan=1></td>
                             <td class="subtext"><span id=score_xxxx>$points points</span>
                                 by <a href="https://news.ycombinator.com/user?id=$author">$author</a> | $created_at |
-                                <a href="https://news.ycombinator.com/item?id=$objectID">comments</a>
+                                $num_comments <a href="https://news.ycombinator.com/item?id=$objectID">comments</a>
                             </td>
                         </tr>
                         <tr style="height:2px">
@@ -45,8 +45,8 @@ return {
 ]==],
     comments_body_thread = [==[
         $yield_thread[[
-                       <tr>
-                            <!-- BEGIN COMMENT -->
+                        <!-- BEGIN COMMENT -->
+                        <tr>
                             <td>
                                 <table border=0>
                                     <tr>
@@ -75,7 +75,7 @@ return {
                     <br>
                 </td>
             </tr>
-         </table>
+        </table>
     </center>
 
 <div class="page_footer_text">Page generated in $elapsed seconds </div>

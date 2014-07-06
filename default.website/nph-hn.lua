@@ -11,11 +11,6 @@ local templates = require 'templates'
 local sqlite3   = require 'sqlite3'
 local apr       = require 'apr'
 
-assert(cosmo)
-assert(templates)
-assert(sqlite3)
-assert(apr)
-
 -- TODO if the file does not exist, fail instead of creating a new database
 --local c = sqlite3.open('hn-stories.sqlite')
 local c = sqlite3.open('hn-all-stories+comments.sqlite')
@@ -127,6 +122,8 @@ local function getdates(params)
     untilt[period] = untilt[period] + 1
 
     -- remove unspecified parameter fields from d table
+    -- NOTE: it is safe to remove entries from a table while traversing it
+    -- https://stackoverflow.com/questions/6167555/how-can-i-safely-iterate-a-lua-table-while-keys-are-being-removed/6167683#6167683
     local stripdate = function(d)
         for f, _ in pairs(d) do
             if not tonumber(params[f]) then
@@ -153,7 +150,6 @@ local function show_stories(params)
     local since, untilt, prevdate, nextdate, datefmt = getdates(params)
 
 --    print('show_stories')
---    dump(params, 'params')
 --    dump(params, 'params')
 --    dump(prevdate, 'prevdate')
 --    dump(nextdate, 'nextdate')
