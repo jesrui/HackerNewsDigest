@@ -73,7 +73,7 @@ local function starttimer()
 end
 
 local function stoptimer(t)
-    return apr.time_now() -t
+    return apr.time_now() - t
 end
 
 local function dump(t, str, level)
@@ -92,12 +92,7 @@ local function shallowcopy(t)
     return copy
 end
 
--- http://www.keplerproject.org/en/LuaGems_08 example1.lua
-
-local function show_stories(params)
-    print(response[200])
---    print('show_stories')
---    dump(params, 'params')
+local function getdates(params)
     local since = shallowcopy(params)
 --    dump(since)
     if not tonumber(since.year) then
@@ -146,6 +141,19 @@ local function show_stories(params)
     local nextdate = os.date('*t', os.time(untilt))
     stripdate(nextdate)
 
+    return since, untilt, prevdate, nextdate, datefmt
+end
+
+-- http://www.keplerproject.org/en/LuaGems_08 example1.lua
+
+local function show_stories(params)
+    local t = starttimer()
+    print(response[200])
+
+    local since, untilt, prevdate, nextdate, datefmt = getdates(params)
+
+--    print('show_stories')
+--    dump(params, 'params')
 --    dump(params, 'params')
 --    dump(prevdate, 'prevdate')
 --    dump(nextdate, 'nextdate')
@@ -171,13 +179,12 @@ local function show_stories(params)
     html = cosmo.fill(templates.stories_body_top, dates)
     print(html)
 
-    local q = 'select objectID, created_at_i, author, title, num_comments, '
-        ..'points, url'
+    local q = 'select objectID, created_at_i, author, title, num_comments,'
+        ..' points, url'
         ..' from stories'
         ..' where created_at_i between '..timestamp1..' and '..timestamp2
-        ..' order by created_at_i desc'
+        ..' order by created_at_i'
 
-    local t = starttimer()
 
     -- FIXME lsqlite.so hangs sometimes here?
     -- TODO check errors from prepare()
@@ -189,14 +196,17 @@ local function show_stories(params)
         story.created_at = os.date('!%F %T', story.created_at_i)
         story.tr_class = nrows % 2 == 0 and 'light' or 'dark'
         story.commentsURL = makeurl('comments', story)
-        -- TODO story.url == '' and story.url == makeurl('comments', story)
+        if not story.url or #story.url == 0 then
+            story.url = 'https://news.ycombinator.com/item?id='..story.objectID
+        end
 --        dump(story, 'story')
         html = cosmo.fill(templates.stories_body_listing, story)
         print(html)
     end
 
-    print(templates.stories_body_bottom)
---    print ('elapsed '..stoptimer(t)..' seconds')
+    html = cosmo.fill(templates.stories_body_bottom,
+        {num_stories = nrows, elapsed = string.format('%.3f', stoptimer(t))})
+    print(html)
 end
 
 local function show_comments(params)
