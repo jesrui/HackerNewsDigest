@@ -210,10 +210,11 @@ local function show_stories(params)
 end
 
 local function show_comments(params)
+    local t = starttimer()
 
-    print(response_plain[200])
+    print(response[200])
 
-    print('show_comments')
+--    print('show_comments')
 
     local root_id = tonumber(params.objectID)
     if not root_id then
@@ -221,79 +222,70 @@ local function show_comments(params)
         return
     end
 
-    local t = starttimer()
-
-    local q = 'select objectID, created_at_i, author, title, num_comments'
+    local q = 'select objectID, title, url, author, points, story_text,'
+        ..' num_comments, created_at_i'
         ..' from stories where objectID = '..root_id
 
     local story
     for row in c:prepare(q):rows() do
-        dump(row, 'story '..row.objectID)
+        -- TODO
         story = row
+        if not story.url or #story.url == 0 then
+            story.url = 'https://news.ycombinator.com/item?id='..story.objectID
+        end
+        story.url_host = string.gsub(story.url, '^https?://', '')
+        story.url_host = string.gsub(story.url_host, '/.*$', '')
+        story.created_at = os.date('!%F %T', story.created_at_i)
+--        dump(story, 'story '..row.objectID)
     end
 
-    q = 'select objectID, parent_id, created_at_i, author, comment_text'
+    local html = cosmo.fill(templates.comments_head, story)
+    print(html)
+    html = cosmo.fill(templates.comments_body_top, story)
+    print(html)
+
+    q = 'select objectID, parent_id, created_at_i, author, comment_text, points'
         ..' from comments where story_id = '..root_id
         ..' order by created_at_i desc'
 
-    local nrows = 0
     local comments = {} -- comments keyed by parent_id
     local flat = {}     -- comments keyed by objectID
     for row in c:prepare(q):rows() do
-        nrows = nrows + 1
-        local comment = tostring(row.comment_text)
-        if #comment > 80 then
-            comment = comment:sub(1, 80)..' ...'
-        end
         local children = comments[row.parent_id] or {}
         children[#children+1] = row
         comments[row.parent_id] = children
         flat[row.objectID] = row
---        print(row.objectID, row.parent_id, os.date('!%F %T', row.created_at_i),
---            string.format('%-10s', row.author), comment)
-        row.comment_text = comment
     end
-    print (nrows..' rows')
-
---[=[
-    dump(comments, 'comments')
-    for parent_id, children in pairs(comments) do
-        dump(children, 'parent '..parent_id)
-        for i, c in ipairs(children) do
-            dump(c, 'comment '..c.objectID, 1)
-        end
-    end
---]=]
 
     -- TODO sort children by date or points
 
-    local printthread
-    printthread = function(parent_id, lvl)
-        local c = flat[parent_id] or {}
-        dump(c, 'comment '..parent_id, lvl)
+    local yield_thread_r
+    yield_thread_r = function(parent_id, lvl)
+        local comment = flat[parent_id]
+        if comment then
+            comment.indentw = lvl*40
+            comment.created_at = os.date('!%F %T', comment.created_at_i)
+            cosmo.yield(comment)
+        end
         local children = comments[parent_id]
         if children then
-            for i, c in ipairs(children) do
-                printthread(c.objectID, lvl+1)
+            for i, comment in ipairs(children) do
+                yield_thread_r(comment.objectID, lvl+1)
             end
         end
     end
 
-    printthread(root_id, 0)
+    html = cosmo.fill(templates.comments_body_thread, {
+            story = story,
+            yield_thread = function()
+                yield_thread_r(root_id, -1)
+            end,
+        })
+    print(html)
 
---[=[
-    print(
-        cosmo.fill(templates.comments, {
-            title = story.title,
-            list_comments = function()
-                for i, p in pairs(flat) do
-                    cosmo.yield(p)
-                end
-            end
-        }))
-]=]--
-
-    print ('elapsed '..stoptimer(t)..' seconds')
+    html = cosmo.fill(templates.comments_body_bottom,
+        {elapsed = string.format('%.3f', stoptimer(t))})
+    print(html)
 end
 
 local URLs = {

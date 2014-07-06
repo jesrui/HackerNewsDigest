@@ -1,15 +1,87 @@
 return {
-    comments = [==[
+    comments_head = [==[
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width"/>
+<title>$title | Hacker News Digest</title>
+</head>
+]==],
+    comments_body_top = [==[
+<body>
+    <center>
+        <table border=0 cellpadding=0 cellspacing=0 width="85%" bgcolor=#f6f6ef>
+            <!-- BEGIN STORY AND COMMENTS -->
+            <tr>
+                <td>
+                    <!-- BEGIN STORY -->
+                    <table border=0>
+                        <tr>
+                            <td>
+                            </td>
+                            <td class="title"><a href="$url">$title</a><span class="comhead"> ($url_host)</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan=1></td>
+                            <td class="subtext"><span id=score_xxxx>$points points</span>
+                                by <a href="https://news.ycombinator.com/user?id=$author">$author</a> | $created_at |
+                                <a href="https://news.ycombinator.com/item?id=$objectID">comments</a>
+                            </td>
+                        </tr>
+                        <tr style="height:2px">
+                        </tr>
+                        <tr>
+                            <td></td>
+                            <td>$story_text</td>
+                        </tr>
+                    </table>
+                    <br>
+                    <br>
 
-<H1>$title $flat</H1>
-<P>Example 6 - using Cosmo for content generation</P>
-<UL>
-$list_comments[[
-<LI>$author $comment_text
-</LI>]]
-</UL>
+                    <!-- BEGIN COMMENTS -->
+                    <table border=0>
+]==],
+    comments_body_thread = [==[
+        $yield_thread[[
+                       <tr>
+                            <!-- BEGIN COMMENT -->
+                            <td>
+                                <table border=0>
+                                    <tr>
+                                        <td>
+                                            <img src="s.gif" height=1 width=$indentw>
+                                        </td>
+                                        <td class="default">
+                                            <div style="margin-top:2px; margin-bottom:-10px; ">
+                                                <span class="comhead">
+                                                    <a href="https://news.ycombinator.com/user?id=$author">$author</a>
+                                                    | $created_at | $points points |
+                                                    <a href="https://news.ycombinator.com/item?id=$objectID">link</a>
+                                                </span>
+                                            </div>
+                                            <br>
+                                            <span class="comment"><font color=#000000>$comment_text</font></span>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>]]
+]==],
+    comments_body_bottom = [==[
+                    </table>
+                    <br>
+                    <br>
+                </td>
+            </tr>
+         </table>
+    </center>
 
+<div class="page_footer_text">Page generated in $elapsed seconds </div>
 
+</body>
+</html>
 ]==],
 
     stories_head = [==[
