@@ -145,9 +145,6 @@ $(document).ready(function(){
             </tr>
         </table>
     </center>
-
-<div class="page_footer_text">Page generated in $elapsed seconds </div>
-
 </body>
 </html>
 ]==],
@@ -193,7 +190,7 @@ snapshot (<a href="/w/sqlite.git/snapshot/HEAD.tar.gz">tar.gz</a> <a href="/w/sq
 </table>
 </div>
 <div class="page_footer">
-<div class="page_footer_text">$num_stories stories found in $elapsed seconds</div>
+<div class="page_footer_text">$num_stories stories found</div>
 <a class="rss_logo" title="log RSS feed" href="/w/sqlite.git/rss">RSS</a>
 <a class="rss_logo" title="log Atom feed" href="/w/sqlite.git/atom">Atom</a>
 </div>
