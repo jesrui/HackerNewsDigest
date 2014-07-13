@@ -5,6 +5,7 @@ return {
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width"/>
+<link rel="shortcut icon" href="/favicon.ico">
 <title>$title | Hacker News Digest</title>
 <script type="text/javascript" src="/js/jquery-1.7.2.min.js"></script>
 <script type="text/javascript">
@@ -174,7 +175,7 @@ snapshot (<a href="/w/sqlite.git/snapshot/HEAD.tar.gz">tar.gz</a> <a href="/w/sq
 </div>
 
 <div class="header">
-<span class="title">Hacker News stories from $since ------------- $untilt</span>
+<span class="title">Hacker News stories from $since</span>
 </div>
 <div class="page_body">
 <table class="tree">

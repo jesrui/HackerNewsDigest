@@ -184,7 +184,7 @@ local function show_stories(params)
 
     -- FIXME lsqlite.so hangs sometimes here?
     -- TODO check errors from prepare()
-    -- FIXME althttpd only returns ~ 20 MB of data (results till ~ 2013-10-22
+    -- FIXME althttpd only returns ~ 20 MB of data (results till ~ 2013-10-22)
     -- when the query is for the whole 2013?)
     local nrows = 0
     for story in c:prepare(q):rows() do
@@ -224,7 +224,6 @@ local function show_comments(params)
 
     local story
     for row in c:prepare(q):rows() do
-        -- TODO
         story = row
         if not story.url or #story.url == 0 then
             story.url = 'https://news.ycombinator.com/item?id='..story.objectID
@@ -233,6 +232,11 @@ local function show_comments(params)
         story.url_host = string.gsub(story.url_host, '/.*$', '')
         story.created_at = os.date('!%F %T', story.created_at_i)
 --        dump(story, 'story '..row.objectID)
+    end
+
+    if not story then
+        print('no story found with that objectID')
+        return
     end
 
     local html = cosmo.fill(templates.comments_head, story)
@@ -244,7 +248,7 @@ local function show_comments(params)
         ..' from comments where story_id = '..root_id
         ..' order by created_at_i desc'
 
-    local comments = {} -- comments keyed by parent_id
+    local comments = {} -- comments grouped by parent_id
     local flat = {}     -- comments keyed by objectID
     for row in c:prepare(q):rows() do
         local children = comments[row.parent_id] or {}
@@ -252,8 +256,6 @@ local function show_comments(params)
         comments[row.parent_id] = children
         flat[row.objectID] = row
     end
-
-    -- TODO sort children by date or points
 
     local yield_thread_r
     yield_thread_r = function(parent_id, lvl)
@@ -305,7 +307,7 @@ end
 -- Maps the correct function for a URL
 local function map(url)
     for i, v in ipairs(URLs) do
-        local pattern, f, name = unpack(v)
+        local pattern, f, name = table.unpack(v)
         local params = match(url, pattern)
         if params then
             return f, params
@@ -316,7 +318,7 @@ end
 -- must NOT be local to be accessible to cosmo template functions
 function makeurl(action_name, params)
     for i, v in ipairs(URLs) do
-        local pattern, f, name = unpack(v)
+        local pattern, f, name = table.unpack(v)
         if name == action_name then
             local url = string.gsub(pattern, '$([%w_-]+)', params)
             local n
