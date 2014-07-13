@@ -163,12 +163,13 @@ $(document).ready(function(){
 <body>
 
 <div class="page_header">
-<a title="git homepage" href="http://git-scm.com/"><img class="logo" height="27" src="/git-logo.png" alt="git" width="72" /></a><a href="/w">repo.or.cz</a> / <a href="/w/sqlite.git">sqlite.git</a> / tree
+<a title="About" href="https://github.com/jesrui/HackerNewsDigest"><img class="logo" height="27" src="/git-logo.png" alt="About" width="72" />
+</a>
+Hacker News Digest
 </div>
 
 <div class="page_nav">
-<a href="$prevdateURL">previous</a> | <a href="$nextdateURL">next</a> | <a href="/git-browser/by-commit.html?r=sqlite.git">graphiclog</a> | <a href="/w/sqlite.git/commit/HEAD">commit</a> | <a href="/w/sqlite.git/commitdiff/HEAD">commitdiff</a> | tree | <a href="/w/sqlite.git/refs">refs</a> | <a href="/editproj.cgi?name=sqlite.git">edit</a> | <a href="/regproj.cgi?fork=sqlite.git">fork</a><br/>
-snapshot (<a href="/w/sqlite.git/snapshot/HEAD.tar.gz">tar.gz</a> <a href="/w/sqlite.git/snapshot/HEAD.zip">zip</a>)<br/>
+<a href="$prevdateURL">previous</a> | <a href="$nextdateURL">next</a>
 </div>
 
 <div class="header">
@@ -191,8 +192,6 @@ snapshot (<a href="/w/sqlite.git/snapshot/HEAD.tar.gz">tar.gz</a> <a href="/w/sq
 </div>
 <div class="page_footer">
 <div class="page_footer_text">$num_stories stories found</div>
-<a class="rss_logo" title="log RSS feed" href="/w/sqlite.git/rss">RSS</a>
-<a class="rss_logo" title="log Atom feed" href="/w/sqlite.git/atom">Atom</a>
 </div>
 
 </body>
