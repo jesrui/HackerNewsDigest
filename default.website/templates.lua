@@ -6,6 +6,7 @@ return {
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width"/>
 <link rel="shortcut icon" href="/favicon.ico">
+<link rel="stylesheet" href="/css/news.css"/>
 <title>$title | Hacker News Digest</title>
 <script type="text/javascript" src="/js/jquery-1.7.2.min.js"></script>
 <script type="text/javascript">
