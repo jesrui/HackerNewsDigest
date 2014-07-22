@@ -134,15 +134,26 @@ end
 
 -- http://www.keplerproject.org/en/LuaGems_08 example1.lua
 
-local function show_stories(params)
+local function show_stories(params, query)
     print(response[200])
 
-    local since, untilt, prevdate, nextdate, datefmt = getdates(params)
+--    dump(params)
 
---    print('show_stories')
---    dump(params, 'params')
---    dump(prevdate, 'prevdate')
---    dump(nextdate, 'nextdate')
+    local need_dates = query.author == nil
+    local have_dates = need_dates or tonumber(params.year) ~= nil
+    local since, untilt, prevdate, nextdate, datefmt
+    if have_dates then
+        since, untilt, prevdate, nextdate, datefmt = getdates(params)
+    end
+
+--[[
+    print('show_stories', 'have_dates', have_dates)
+    dump(params, 'params')
+    if have_dates then
+        dump(prevdate, 'prevdate')
+        dump(nextdate, 'nextdate')
+    end
+--]]
 
     -- NOTE: to get timestaps as UTC, rather than local time, start the server
     -- with an empty TZ environment variable, as in
@@ -151,28 +162,51 @@ local function show_stories(params)
     -- http://www-01.ibm.com/support/knowledgecenter/SSLTBW_1.12.0/com.ibm.zos.r12.bpxbd00/rttzs.htm%23rttzs?lang=en
     -- For ANSI-C see:
     -- https://stackoverflow.com/questions/2271408/utc-to-time-of-the-day-in-ansi-c/2271512#2271512
-    local timestamp1 = os.time(since)
-    local timestamp2 = os.time(untilt)
+    local timestamp1, timestamp2
+    if have_dates then
+        timestamp1 = os.time(since)
+        timestamp2 = os.time(untilt)
+    end
 
-    local dates = {
-        since = os.date(datefmt, timestamp1),
-        untilt = os.date(datefmt, timestamp2),
-        prevdateURL = makeurl('stories', prevdate),
-        nextdateURL = makeurl('stories', nextdate),
+    local tparams = {
+        if_dates = function()
+            if have_dates then
+                cosmo.yield({
+                    since = os.date(datefmt, timestamp1),
+                    untilt = os.date(datefmt, timestamp2),
+                    prevdateURL = makeurl('stories', prevdate, query),
+                    nextdateURL = makeurl('stories', nextdate, query),
+                })
+            end
+        end,
+        if_author = function()
+            if query.author then
+                cosmo.yield({author = query.author})
+            end
+        end
     }
-    local html = cosmo.fill(templates.stories_head, dates)
+    local html = cosmo.fill(templates.stories_head, tparams)
     print(html)
-    html = cosmo.fill(templates.stories_body_top, dates)
+    html = cosmo.fill(templates.stories_body_top, tparams)
     print(html)
 
     local q = 'select objectID, created_at_i, author, title, num_comments,'
         ..' points, url'
         ..' from stories'
-        ..' where created_at_i between '..timestamp1..' and '..timestamp2
-        ..' order by created_at_i'
+        ..' where 1 = 1'
+    if have_dates then
+        q = q..' and created_at_i between '..timestamp1..' and '..timestamp2
+    end
+    if query.author then
+        author = string.format('%q', query.author)
+        q = q ..' and author = '..author
+    end
 
+    q = q..' order by created_at_i'
 
-    -- FIXME lsqlite.so hangs sometimes here?
+--    print('q', q)
+
+    -- FIXME sqlite.so hangs sometimes here?
     -- TODO check errors from prepare()
     -- FIXME althttpd only returns ~ 20 MB of data (results till ~ 2013-10-22)
     -- when the query is for the whole 2013?)
@@ -181,10 +215,11 @@ local function show_stories(params)
         nrows = nrows + 1
         story.created_at = os.date('!%F %T', story.created_at_i)
         story.tr_class = nrows % 2 == 0 and 'light' or 'dark'
-        story.commentsURL = makeurl('comments', story)
+        story.comments_url = cgienv.SCRIPT_NAME..'/comments/'..story.objectID
         if not story.url or #story.url == 0 then
             story.url = 'https://news.ycombinator.com/item?id='..story.objectID
         end
+        story.author_url = cgienv.SCRIPT_NAME..'/stories?author='..story.author
 --        dump(story, 'story')
         html = cosmo.fill(templates.stories_body_listing, story)
         print(html)
@@ -218,6 +253,7 @@ local function show_comments(params)
         story.url_host = string.gsub(story.url, '^https?://', '')
         story.url_host = string.gsub(story.url_host, '/.*$', '')
         story.created_at = os.date('!%F %T', story.created_at_i)
+        story.author_url = cgienv.SCRIPT_NAME..'/stories?author='..story.author
 --        dump(story, 'story '..row.objectID)
     end
 
@@ -250,6 +286,7 @@ local function show_comments(params)
         if comment then
             comment.indentw = lvl*40
             comment.created_at = os.date('!%F %T', comment.created_at_i)
+            comment.author_url = cgienv.SCRIPT_NAME..'/stories?author='..comment.author
             cosmo.yield(comment)
         end
         local children = comments[parent_id]
@@ -261,7 +298,6 @@ local function show_comments(params)
     end
 
     html = cosmo.fill(templates.comments_body_thread, {
-            story = story,
             yield_thread = function()
                 yield_thread_r(root_id, -1)
             end,
@@ -300,8 +336,44 @@ local function map(url)
     end
 end
 
+-- URL handling functions taken from Pogramming in Lua 2nd Ed.
+
+local function URLescape(s)
+    s = string.gsub(s, '[&=+%%%c]', function (c)
+            return string.format('%%%02X', string.byte(c))
+        end)
+    s = string.gsub(s, ' ', '+')
+    return s
+end
+
+local function URLunescape(s)
+    s = string.gsub(s, '+', ' ')
+    s = string.gsub(s, '%%(%x%x', function (h)
+            return string.char(tonumber(h, 16))
+        end)
+    return s
+end
+
+local function URLencode(t)
+    local b = {}
+    for k, v in pairs(t) do
+        b[#b + 1] = URLescape(k)..'='..URLescape(v)
+    end
+    return table.concat(b, '&')
+end
+
+local function URLdecode(s)
+    local t = {}
+    for name, value in string.gmatch(s, '([^&=]+)=([^&=]+)') do
+        name = URLunescape(name)
+        value = URLunescape(value)
+        t[name] = value
+    end
+    return t
+end
+
 -- must NOT be local to be accessible to cosmo template functions
-function makeurl(action_name, params)
+function makeurl(action_name, params, query)
     for i, v in ipairs(URLs) do
         local pattern, f, name = table.unpack(v)
         if name == action_name then
@@ -310,6 +382,9 @@ function makeurl(action_name, params)
             repeat -- remove undefined param names: '/123/$p1/$p2/' --> '/123'
                 url, n = string.gsub(url, '/$[%w_-]+/?$', '')
             until n == 0
+            if query and next(query, nil) then -- query table not empty?
+                url = url..'?'..URLencode(query)
+            end
             url = cgienv.SCRIPT_NAME..url
             return url
         end
@@ -324,6 +399,8 @@ end
 local f, args = map(cgienv.PATH_INFO)
 
 if f then
-    return f(args)
+    local query = URLdecode(cgienv.QUERY_STRING or '')
+--  dump(cgienv.query, 'cgienv.query')
+    return f(args, query)
 end
 

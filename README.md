@@ -36,8 +36,8 @@ The application serves just two URLs: one for stories listed by date and one
 for the comments of a specific story.
 
 * The story URL looks like
-`http://localhost:8080/nph-hn.lua/stories/$year/$month/$day/$hour/$min`. All
-date and time fields are optional, so that for example
+`http://localhost:8080/nph-hn.lua/stories/$year/$month/$day/$hour/$min?author=$author`.
+The `?author=...` part and all date and time fields are optional, so that for example
 <http://localhost:8080/nph-hn.lua/stories/2013/12/31> lists all the stories for
 31 Dec 2013.
 

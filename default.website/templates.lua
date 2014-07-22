@@ -91,7 +91,7 @@ $(document).ready(function(){
                         <tr>
                             <td colspan=1></td>
                             <td class="subtext"><span id=score_xxxx>$points points</span>
-                                by <a href="https://news.ycombinator.com/user?id=$author">$author</a> | $created_at |
+                                by <a href="$author_url">$author</a> | $created_at |
                                 $num_comments <a href="https://news.ycombinator.com/item?id=$objectID">comments</a>
                             </td>
                         </tr>
@@ -125,7 +125,7 @@ $(document).ready(function(){
                                         <td class="default" valign=top>
                                             <div style="margin-top:2px; margin-bottom:-10px; ">
                                                 <span class="comhead">
-                                                    <a href="https://news.ycombinator.com/user?id=$author">$author</a>
+                                                    <a href="$author_url">$author</a>
                                                     | $created_at | $points points |
                                                     <a href="https://news.ycombinator.com/item?id=$objectID">link</a>
                                                 </span>
@@ -156,7 +156,7 @@ $(document).ready(function(){
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width"/>
-<title>Hacker News Digest - Stories from $since</title>
+<title>Hacker News Digest - Stories $if_dates[[from $since]] $if_author[[submitted by $author]]</title>
 <link rel="stylesheet" href="/css/gitweb.css"/>
 </head>
 ]==],
@@ -169,12 +169,14 @@ $(document).ready(function(){
 Hacker News Digest
 </div>
 
+$if_dates[[
 <div class="page_nav">
 <a href="$prevdateURL">previous</a> | <a href="$nextdateURL">next</a>
 </div>
+]]
 
 <div class="header">
-<span class="title">Hacker News stories from $since</span>
+<span class="title">Hacker News stories $if_dates[[from $since]] $if_author[[submitted by $author]]</span>
 </div>
 <div class="page_body">
 <table class="tree">
@@ -182,9 +184,9 @@ Hacker News Digest
     stories_body_listing = [==[
 <tr class="$tr_class">
 <td class="mode">$created_at</td>
-<td class="size link"><a href="$commentsURL">$num_comments</a></td>
+<td class="size link"><a href="$comments_url">$num_comments</a></td>
 <td class="size">$points</td>
-<td class="mode">$author</td>
+<td class="mode link"><a href="$author_url">$author</a></td>
 <td class="link"><a href="$url">$title</a></td>
 </tr>
 ]==],
