@@ -146,6 +146,7 @@ $(document).ready(function(){
             </tr>
         </table>
     </center>
+    <div class="page_footer_text">Page generated in $elapsed seconds </div>
 </body>
 </html>
 ]==],
@@ -194,7 +195,7 @@ $if_dates[[
 </table>
 </div>
 <div class="page_footer">
-<div class="page_footer_text">$num_stories stories found</div>
+<div class="page_footer_text">$num_stories stories found in $elapsed seconds</div>
 </div>
 
 </body>

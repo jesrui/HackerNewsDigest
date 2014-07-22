@@ -6,6 +6,7 @@
 --       /* NOTE: No log entry written for nph- scripts */
 
 
+local socket    = require 'socket'
 local cosmo     = require 'cosmo'
 local templates = require 'templates'
 local sqlite3   = require 'sqlite3'
@@ -60,6 +61,14 @@ local cgienv = {
 for _, name in ipairs(cgienv) do
     cgienv[name] = os.getenv(name)
 --    print(name, cgienv[name])
+end
+
+local function starttimer()
+    return socket.gettime()
+end
+
+local function stoptimer(t)
+    return socket.gettime() -t
 end
 
 local function dump(t, str, level)
@@ -135,6 +144,8 @@ end
 -- http://www.keplerproject.org/en/LuaGems_08 example1.lua
 
 local function show_stories(params, query)
+    local time = starttimer()
+
     print(response[200])
 
 --    dump(params)
@@ -225,11 +236,14 @@ local function show_stories(params, query)
         print(html)
     end
 
-    html = cosmo.fill(templates.stories_body_bottom, {num_stories = nrows})
+    html = cosmo.fill(templates.stories_body_bottom,
+        {num_stories = nrows, elapsed = string.format('%.3f', stoptimer(time))})
     print(html)
 end
 
 local function show_comments(params)
+    local time = starttimer()
+
     print(response[200])
 
 --    print('show_comments')
@@ -304,7 +318,9 @@ local function show_comments(params)
         })
     print(html)
 
-    print(templates.comments_body_bottom)
+    html = cosmo.fill(templates.comments_body_bottom,
+        {elapsed = string.format('%.3f', stoptimer(time))})
+    print(html)
 end
 
 local URLs = {
