@@ -159,6 +159,14 @@ $(document).ready(function(){
 <meta name="viewport" content="width=device-width"/>
 <title>Hacker News Digest - Stories $if_dates[[from $since]] $if_author[[submitted by $author]]</title>
 <link rel="stylesheet" href="/css/gitweb.css"/>
+<link rel="stylesheet" href="/css/blue/style.css" type="text/css" media="print, projection, screen" />
+<script type="text/javascript" src="/js/jquery-1.7.2.min.js"></script>
+<script type="text/javascript" src="/js/jquery.tablesorter.min.js"></script>
+<script type="text/javascript">
+$(document).ready(function() {
+    $("#myTable").tablesorter()
+});
+</script>
 </head>
 ]==],
     stories_body_top = [==[
@@ -180,7 +188,16 @@ $if_dates[[
 <span class="title">Hacker News stories $if_dates[[from $since]] $if_author[[submitted by $author]]</span>
 </div>
 <div class="page_body">
-<table class="tree">
+<table id="myTable" class="tablesorter">
+<thead>
+<tr>
+    <th>Date</th>
+    <th>Comments</th>
+    <th>Points</th>
+    <th>Author</th>
+    <th>Title</th>
+</tr>
+</thead>
 ]==],
     stories_body_listing = [==[
 <tr class="$tr_class">
