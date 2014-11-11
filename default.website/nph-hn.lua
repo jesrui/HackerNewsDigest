@@ -17,7 +17,7 @@ local c = sqlite3.open('hn-all-stories+comments.sqlite')
 --local c = sqlite3.open('hn-all-stories+test_comments.sqlite')
 assert(c)
 
--- TODO end each response line w/ \r\n (esacpe codes are not interpreted between
+-- TODO end each response line w/ \r\n (escape codes are not interpreted between
 -- [==[ and ]==])
 local response = {
     [200] = [==[
@@ -205,12 +205,15 @@ local function show_stories(params, query)
         ..' points, url'
         ..' from stories'
         ..' where 1 = 1'
+    local binds = {}
     if have_dates then
-        q = q..' and created_at_i between '..timestamp1..' and '..timestamp2
+        binds[':timestamp1'] = timestamp1
+        binds[':timestamp2'] = timestamp2
+        q = q..' and created_at_i between :timestamp1 and :timestamp2'
     end
     if query.author then
-        author = string.format('%q', query.author)
-        q = q ..' and author = '..author
+        binds[':author'] = query.author
+        q = q ..' and author = :author'
     end
 
     q = q..' order by created_at_i'
@@ -222,7 +225,9 @@ local function show_stories(params, query)
     -- FIXME althttpd only returns ~ 20 MB of data (results till ~ 2013-10-22)
     -- when the query is for the whole 2013?)
     local nrows = 0
-    for story in c:prepare(q):rows() do
+    local p = c:prepare(q)
+    p:bind(binds)
+    for story in p:rows() do
         nrows = nrows + 1
         story.created_at = os.date('!%F %T', story.created_at_i)
         story.tr_class = nrows % 2 == 0 and 'light' or 'dark'
@@ -256,10 +261,13 @@ local function show_comments(params)
 
     local q = 'select objectID, title, url, author, points, story_text,'
         ..' num_comments, created_at_i'
-        ..' from stories where objectID = '..root_id
+        ..' from stories where objectID = :root_id'
+    local binds = { [':root_id'] = root_id }
 
     local story
-    for row in c:prepare(q):rows() do
+    local p = c:prepare(q)
+    p:bind(binds)
+    for row in p:rows() do
         story = row
         if not story.url or #story.url == 0 then
             story.url = 'https://news.ycombinator.com/item?id='..story.objectID
@@ -282,12 +290,15 @@ local function show_comments(params)
     print(html)
 
     q = 'select objectID, parent_id, created_at_i, author, comment_text, points'
-        ..' from comments where story_id = '..root_id
+        ..' from comments where story_id = :root_id'
         ..' order by created_at_i desc'
+    binds = { [':root_id'] = root_id }
 
     local comments = {} -- comments grouped by parent_id
     local flat = {}     -- comments keyed by objectID
-    for row in c:prepare(q):rows() do
+    local p = c:prepare(q)
+    p:bind(binds)
+    for row in p:rows() do
         local children = comments[row.parent_id] or {}
         children[#children+1] = row
         comments[row.parent_id] = children
@@ -419,4 +430,3 @@ if f then
 --  dump(cgienv.query, 'cgienv.query')
     return f(args, query)
 end
-
