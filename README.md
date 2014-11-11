@@ -27,7 +27,7 @@ LUA_CPATH="$HOME/lsqlite3lib/?.so;./?.so"`)
 
         TZ= ~/althttpd/althttpd -logfile logfile -root $HOME/althttpd/HackerNewsDigest/ -port 8080
 
-The `TZ` enviroment variable is set to an empty string to get timestaps as
+The `TZ` enviroment variable is set to an empty string to get timestamps as
 UTC, rather than local time.
 
 ## Browsing stories and comments
