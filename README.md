@@ -11,7 +11,7 @@ Hacker News Digest is a little web application to browse the SQLite database of
 * [lsqlitelib](https://github.com/jesrui/lsqlite3lib/tree/lua52) Lua bindings
 for sqlite (lua52 branch)
 
-## Setup with [althttpd](https://github.com/jesrui/alhttpd)
+## Setup with [althttpd](https://github.com/jesrui/althttpd)
 
 * Compile lsqlitelib and copy `sqlite.so` to
 `HackerNewsDigest/default.website`. Alternatively, set `LUA_CPATH` to an
